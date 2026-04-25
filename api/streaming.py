@@ -865,6 +865,31 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
             if _profile_home:
                 os.environ['HERMES_HOME'] = _profile_home
         # Lock released — agent runs without holding it
+
+        # Patch module-level cached paths so skills/cron use the correct profile
+        # (matches switch_profile() behavior in profiles.py)
+        if _profile_home:
+            try:
+                from pathlib import Path as _Path
+                _profile_path = _Path(_profile_home)
+                # Patch skills_tool
+                try:
+                    import tools.skills_tool as _sk
+                    _sk.HERMES_HOME = _profile_path
+                    _sk.SKILLS_DIR = _profile_path / 'skills'
+                except (ImportError, AttributeError):
+                    pass
+                # Patch cron.jobs
+                try:
+                    import cron.jobs as _cj
+                    _cj.HERMES_DIR = _profile_path
+                    _cj.CRON_DIR = _profile_path / 'cron'
+                    _cj.JOBS_FILE = _cj.CRON_DIR / 'jobs.json'
+                    _cj.OUTPUT_DIR = _cj.CRON_DIR / 'output'
+                except (ImportError, AttributeError):
+                    pass
+            except Exception:
+                logger.debug("Failed to patch module-level paths for profile %s", getattr(s, 'profile', None))
         # Register a gateway-style notify callback so the approval system can
         # push the `approval` SSE event the moment a dangerous command is
         # detected, without waiting for the next on_tool() poll cycle.

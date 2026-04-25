@@ -2191,6 +2191,10 @@ def _handle_chat_start(handler, body):
         # Stale stream id from a previous run; clear and continue.
         s.active_stream_id = None
     stream_id = uuid.uuid4().hex
+    # Sync profile from client if provided (ensures correct config after profile switch)
+    client_profile = body.get("profile")
+    if client_profile:
+        s.profile = client_profile
     s.workspace = workspace
     s.model = model
     s.active_stream_id = stream_id

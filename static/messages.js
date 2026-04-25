@@ -69,6 +69,7 @@ async function send(){
     const startData=await api('/api/chat/start',{method:'POST',body:JSON.stringify({
       session_id:activeSid,message:msgText,
       model:S.session.model||$('modelSelect').value,workspace:S.session.workspace,
+      profile:S.activeProfile||'default',
       attachments:uploaded.length?uploaded:undefined
     })});
     if(startData.effective_model && S.session){
